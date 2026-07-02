@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Env / secrets
+.env
+.env.local
+
+# Vector store + caches
+.chroma/
+*.sqlite3
+.cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Model caches (sentence-transformers / HF)
+.hf_cache/
+
+# Eval run artifacts
+runs/
+*.scorecard.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -123,6 +123,9 @@ rag-eval ask "..." --llm-provider anthropic --llm-model claude-sonnet-5
 ## Quickstart
 
 ```bash
+python -m venv .venv
+# activate: source .venv/bin/activate        (macOS/Linux)
+#           .\.venv\Scripts\Activate.ps1     (Windows PowerShell)
 pip install -e ".[dev]"
 cp .env.example .env            # add GROQ_API_KEY (free at console.groq.com/keys)
 
@@ -131,6 +134,11 @@ rag-eval ask "How do I create a branch and switch to it?"
 rag-eval eval                   # print the scorecard
 rag-eval sweep                  # print the config-comparison table
 ```
+
+> The `rag-eval` command lives inside the virtualenv — activate it first (above),
+> or call it directly with `.venv/bin/rag-eval` / `.\.venv\Scripts\rag-eval.exe`.
+> Prefer a smaller/faster model or hit a rate limit? Every command takes
+> `--config configs/groq-8b.yaml`.
 
 Example `ask` output:
 

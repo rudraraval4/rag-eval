@@ -1,0 +1,37 @@
+# Lighter-weight config: same local BGE retrieval, but a smaller/faster Groq
+# model for answering and judging. Useful when the 70B model's free-tier daily
+# token budget is exhausted, or for quick iteration. Demonstrates that swapping
+# the LLM is a one-line config change — the pipeline is unchanged.
+
+embedding:
+  provider: bge
+  model: BAAI/bge-small-en-v1.5
+  batch_size: 32
+
+llm:
+  provider: groq
+  model: llama-3.1-8b-instant
+  temperature: 0.0
+  max_tokens: 1024
+
+judge:
+  provider: groq
+  model: llama-3.1-8b-instant
+  temperature: 0.0
+  max_tokens: 1024
+
+chunking:
+  chunk_size: 512
+  chunk_overlap: 64
+
+retrieval:
+  top_k: 5
+
+storage:
+  persist_dir: .chroma
+  collection: rag_eval
+
+paths:
+  corpus_dir: data/corpus
+  eval_set: data/eval/eval_set.jsonl
+  runs_dir: runs

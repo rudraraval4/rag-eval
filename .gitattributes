@@ -1,0 +1,11 @@
+# Normalize line endings: store text as LF in the repo, check out native.
+* text=auto eol=lf
+
+# Explicitly treat these as text.
+*.py    text
+*.md    text
+*.toml  text
+*.yaml  text
+*.yml   text
+*.jsonl text
+*.txt   text

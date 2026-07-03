@@ -29,6 +29,9 @@ htmlcov/
 runs/
 *.scorecard.json
 
+# Build / install logs
+*.log
+
 # OS / editor
 .DS_Store
 .idea/

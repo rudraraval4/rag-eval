@@ -95,13 +95,16 @@ def eval(
 @app.command()
 def sweep(
     config: str = typer.Option(DEFAULT_CONFIG, help="Path to the base run config YAML."),
+    with_answers: bool = typer.Option(
+        False, help="Also score answer quality per config (many more LLM calls)."
+    ),
 ) -> None:
-    """Compare configurations and print a results table."""
+    """Compare configurations (chunk size × k) and print a results table."""
     cfg = _load_config(config)
     from .eval.sweep import run_sweep
     from .render import print_sweep
 
-    results = run_sweep(cfg)
+    results = run_sweep(cfg, answers=with_answers, judge=with_answers)
     print_sweep(console, results)
 
 

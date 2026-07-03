@@ -22,26 +22,40 @@ def _mean(values: list[float]) -> float:
 
 
 def run_eval(
-    cfg: RunConfig, *, judge: bool = True, limit: int | None = None
+    cfg: RunConfig,
+    *,
+    answers: bool = True,
+    judge: bool = True,
+    limit: int | None = None,
 ) -> Scorecard:
-    """Evaluate the pipeline defined by ``cfg`` over the labeled eval set."""
+    """Evaluate the pipeline defined by ``cfg`` over the labeled eval set.
+
+    ``answers=False`` measures retrieval only (no LLM calls) — used by the
+    config sweep, where the deterministic retrieval metrics are what chunk size
+    and k actually move. ``judge=False`` still generates answers but skips the
+    LLM judge.
+    """
     cases = load_eval_set(cfg.paths.eval_set)
     if limit is not None:
         cases = cases[:limit]
 
     retriever = build_retriever(cfg)
-    answerer = get_llm_client(cfg.llm)
-    judge_llm = get_llm_client(cfg.judge) if judge else None
+    answerer = get_llm_client(cfg.llm) if answers else None
+    judge_llm = get_llm_client(cfg.judge) if (answers and judge) else None
     k = cfg.retrieval.top_k
 
     results: list[CaseResult] = []
     for case in cases:
         retrieval = retriever.retrieve(case.question)
         metrics = compute_retrieval_metrics(retrieval, case.relevant_doc_ids, k)
-        answer = generate_answer(answerer, case.question, retrieval)
+        answer = (
+            generate_answer(answerer, case.question, retrieval)
+            if answerer is not None
+            else None
+        )
         judgement = (
             judge_answer(judge_llm, case.question, answer.text, retrieval)
-            if judge_llm is not None
+            if judge_llm is not None and answer is not None
             else None
         )
         results.append(

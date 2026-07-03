@@ -54,26 +54,35 @@ def print_scorecard(console: Console, sc: Scorecard) -> None:
 
 
 def print_sweep(console: Console, results: list[Scorecard]) -> None:
+    judged = any(sc.faithfulness is not None for sc in results)
     table = Table(title="Configuration comparison", show_lines=True)
     table.add_column("chunk", justify="right")
     table.add_column("overlap", justify="right")
     table.add_column("k", justify="right")
-    table.add_column("embedding")
+    table.add_column("hit_rate", justify="right")
     table.add_column("recall@k", justify="right")
+    table.add_column("precision@k", justify="right")
     table.add_column("MRR", justify="right")
-    table.add_column("faithful", justify="right")
-    table.add_column("halluc.", justify="right")
+    if judged:
+        table.add_column("faithful", justify="right")
+        table.add_column("halluc.", justify="right")
+
+    # Highlight the row with the best MRR (ties broken by recall).
+    best = max(results, key=lambda s: (s.mrr, s.recall_at_k), default=None)
 
     for sc in results:
         cfg = sc.config_summary
-        table.add_row(
+        row = [
             cfg.get("chunk_size", "—"),
             cfg.get("chunk_overlap", "—"),
             cfg.get("top_k", "—"),
-            cfg.get("embedding", "—"),
+            _fmt(sc.hit_rate),
             _fmt(sc.recall_at_k),
+            _fmt(sc.precision_at_k),
             _fmt(sc.mrr),
-            _fmt(sc.faithfulness),
-            _fmt(sc.hallucination_rate),
-        )
+        ]
+        if judged:
+            row += [_fmt(sc.faithfulness), _fmt(sc.hallucination_rate)]
+        style = "bold green" if sc is best else None
+        table.add_row(*row, style=style)
     console.print(table)

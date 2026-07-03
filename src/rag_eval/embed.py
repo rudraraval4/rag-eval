@@ -43,7 +43,13 @@ class BGEEmbedding:
         self._model = SentenceTransformer(model)
         self._batch_size = batch_size
         self._is_bge = "bge" in model.lower()
-        self.dim = int(self._model.get_sentence_embedding_dimension())
+        # sentence-transformers renamed this method; support both versions.
+        get_dim = getattr(
+            self._model,
+            "get_embedding_dimension",
+            self._model.get_sentence_embedding_dimension,
+        )
+        self.dim = int(get_dim())
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         vectors = self._model.encode(

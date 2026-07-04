@@ -16,6 +16,12 @@ Runnable three ways: a **CLI**, an importable **Python library**, and a **REST
 API** (with Docker). Pluggable embedding and LLM providers, retry/backoff,
 concurrent evaluation, structured logging, and saved run artifacts.
 
+## Demo
+
+![rag-eval: doctor checklist, a cited answer, an honest decline, and the config-comparison table](docs/demo.gif)
+
+<sub>Generate it yourself with `make demo` — needs [vhs](https://github.com/charmbracelet/vhs), an activated venv, and `GROQ_API_KEY`.</sub>
+
 ---
 
 ## The scorecard (real output)

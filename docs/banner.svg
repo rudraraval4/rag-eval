@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 340" role="img" aria-label="rag-eval — a production-grade RAG system that measures itself">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1222"/>
+      <stop offset="0.55" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#0e1b2c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#39c5cf"/>
+      <stop offset="1" stop-color="#3fb950"/>
+    </linearGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#8b949e" opacity="0.06"/>
+    </pattern>
+    <style>
+      .t   { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+      .mono{ font-family: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="340" rx="18" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1280" height="340" rx="18" fill="url(#dots)"/>
+
+  <!-- magnifier motif -->
+  <g transform="translate(74,150)" fill="none" stroke="url(#accent)" stroke-width="6">
+    <circle cx="26" cy="-4" r="26"/>
+    <line x1="45" y1="15" x2="66" y2="36" stroke-linecap="round"/>
+  </g>
+
+  <!-- left: title block -->
+  <text class="t" x="150" y="96" fill="#768390" font-size="17" letter-spacing="4">RETRIEVAL-AUGMENTED GENERATION</text>
+  <text class="t" x="148" y="176" fill="#f0f6fc" font-size="82" font-weight="800">rag-eval</text>
+  <rect x="152" y="196" width="120" height="5" rx="2.5" fill="url(#accent)"/>
+  <text class="t" x="152" y="246" fill="#c9d1d9" font-size="27">A production-grade RAG system that <tspan fill="#39c5cf" font-style="italic">measures itself</tspan>.</text>
+
+  <!-- chips -->
+  <g class="t" font-size="15" fill="#adbac7">
+    <g transform="translate(152,278)">
+      <rect width="150" height="34" rx="17" fill="#161b22" stroke="#30363d"/>
+      <text x="75" y="22" text-anchor="middle">deterministic metrics</text>
+    </g>
+    <g transform="translate(314,278)">
+      <rect width="122" height="34" rx="17" fill="#161b22" stroke="#30363d"/>
+      <text x="61" y="22" text-anchor="middle">LLM-as-judge</text>
+    </g>
+    <g transform="translate(448,278)">
+      <rect width="150" height="34" rx="17" fill="#161b22" stroke="#30363d"/>
+      <text x="75" y="22" text-anchor="middle">pluggable providers</text>
+    </g>
+    <g transform="translate(610,278)">
+      <rect width="140" height="34" rx="17" fill="#161b22" stroke="#30363d"/>
+      <text x="70" y="22" text-anchor="middle">CLI · API · Docker</text>
+    </g>
+  </g>
+
+  <!-- right: real headline metrics as cards -->
+  <g transform="translate(944,58)">
+    <g transform="translate(0,0)">
+      <rect width="276" height="66" rx="12" fill="#0f151d" stroke="#30363d"/>
+      <text class="t"    x="20" y="28" fill="#768390" font-size="15">recall@5</text>
+      <text class="mono" x="256" y="46" fill="#3fb950" font-size="34" font-weight="700" text-anchor="end">1.000</text>
+    </g>
+    <g transform="translate(0,80)">
+      <rect width="276" height="66" rx="12" fill="#0f151d" stroke="#30363d"/>
+      <text class="t"    x="20" y="28" fill="#768390" font-size="15">MRR</text>
+      <text class="mono" x="256" y="46" fill="#39c5cf" font-size="34" font-weight="700" text-anchor="end">0.893</text>
+    </g>
+    <g transform="translate(0,160)">
+      <rect width="276" height="66" rx="12" fill="#0f151d" stroke="#30363d"/>
+      <text class="t"    x="20" y="28" fill="#768390" font-size="15">hallucination rate</text>
+      <text class="mono" x="256" y="46" fill="#3fb950" font-size="34" font-weight="700" text-anchor="end">0.000</text>
+    </g>
+    <text class="t" x="138" y="256" fill="#586069" font-size="13" text-anchor="middle">measured on the committed eval set</text>
+  </g>
+</svg>

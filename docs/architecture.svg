@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 640" role="img" aria-label="rag-eval architecture: ingest, ask, and evaluate lanes over one config">
+  <defs>
+    <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/>
+    </marker>
+    <marker id="arwd" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#39c5cf"/>
+    </marker>
+    <style>
+      .t    { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+      .box  { fill: #161b22; stroke: #30363d; }
+      .lbl  { fill: #f0f6fc; font-size: 15px; font-weight: 600; }
+      .sub  { fill: #768390; font-size: 12.5px; }
+      .lane { fill: #586069; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+      .edge { stroke: #8b949e; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="640" rx="16" fill="#0d1117"/>
+
+  <!-- ============ Lane 1: INGEST ============ -->
+  <text class="t lane" x="30" y="106">1 · INGEST</text>
+
+  <rect class="box" x="140" y="74" width="150" height="58" rx="10"/>
+  <text class="t lbl" x="215" y="99" text-anchor="middle">Documents</text>
+  <text class="t sub" x="215" y="118" text-anchor="middle">md · txt · pdf · html</text>
+
+  <rect class="box" x="330" y="74" width="150" height="58" rx="10"/>
+  <text class="t lbl" x="405" y="99" text-anchor="middle">Chunk</text>
+  <text class="t sub" x="405" y="118" text-anchor="middle">token-aware + overlap</text>
+
+  <rect class="box" x="520" y="74" width="160" height="58" rx="10"/>
+  <text class="t lbl" x="600" y="99" text-anchor="middle">Embed</text>
+  <text class="t sub" x="600" y="118" text-anchor="middle">BGE · OpenAI · Voyage</text>
+
+  <!-- Chroma cylinder -->
+  <g transform="translate(720,72)">
+    <path d="M0,12 v38 a75,12 0 0 0 150,0 v-38" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/>
+    <ellipse cx="75" cy="12" rx="75" ry="12" fill="#0f151d" stroke="#39c5cf" stroke-width="1.6"/>
+    <text class="t lbl" x="75" y="42" text-anchor="middle">Chroma</text>
+    <text class="t sub" x="75" y="60" text-anchor="middle">vector index</text>
+  </g>
+
+  <line class="edge" x1="290" y1="103" x2="326" y2="103" marker-end="url(#arw)"/>
+  <line class="edge" x1="480" y1="103" x2="516" y2="103" marker-end="url(#arw)"/>
+  <line class="edge" x1="680" y1="103" x2="716" y2="103" marker-end="url(#arw)"/>
+
+  <!-- ============ Lane 2: ASK ============ -->
+  <text class="t lane" x="30" y="286">2 · ASK</text>
+
+  <rect class="box" x="140" y="254" width="150" height="58" rx="10"/>
+  <text class="t lbl" x="215" y="279" text-anchor="middle">Question</text>
+  <text class="t sub" x="215" y="298" text-anchor="middle">natural language</text>
+
+  <rect class="box" x="340" y="254" width="175" height="58" rx="10"/>
+  <text class="t lbl" x="427" y="279" text-anchor="middle">Retrieve top-k</text>
+  <text class="t sub" x="427" y="298" text-anchor="middle">reads the index</text>
+
+  <rect class="box" x="560" y="254" width="230" height="58" rx="10"/>
+  <text class="t lbl" x="675" y="279" text-anchor="middle">Cited answer</text>
+  <text class="t sub" x="675" y="298" text-anchor="middle">[n] → real chunks, verified</text>
+
+  <line class="edge" x1="290" y1="283" x2="326" y2="283" marker-end="url(#arw)"/>
+  <line class="edge" x1="515" y1="283" x2="551" y2="283" marker-end="url(#arw)"/>
+  <!-- Chroma feeds retrieval -->
+  <path class="edge" d="M795,132 C820,190 560,210 445,250" stroke="#39c5cf" stroke-dasharray="5 5" marker-end="url(#arwd)"/>
+  <text class="t sub" x="620" y="205" fill="#39c5cf">retrieve</text>
+
+  <!-- ============ Lane 3: EVALUATE ============ -->
+  <text class="t lane" x="30" y="448">3 · EVALUATE</text>
+
+  <rect class="box" x="140" y="414" width="150" height="58" rx="10"/>
+  <text class="t lbl" x="215" y="439" text-anchor="middle">Eval set</text>
+  <text class="t sub" x="215" y="458" text-anchor="middle">labeled Q + docs</text>
+
+  <rect class="box" x="340" y="372" width="200" height="62" rx="10" stroke="#39c5cf"/>
+  <text class="t lbl" x="440" y="397" text-anchor="middle" fill="#39c5cf">Retrieval metrics</text>
+  <text class="t sub" x="440" y="416" text-anchor="middle">recall@k · MRR · precision@k</text>
+
+  <rect class="box" x="340" y="452" width="200" height="62" rx="10" stroke="#3fb950"/>
+  <text class="t lbl" x="440" y="477" text-anchor="middle" fill="#3fb950">LLM-as-judge</text>
+  <text class="t sub" x="440" y="496" text-anchor="middle">faithful · relevant · hallucination</text>
+
+  <rect class="box" x="600" y="412" width="200" height="62" rx="10"/>
+  <text class="t lbl" x="700" y="437" text-anchor="middle">Scorecard</text>
+  <text class="t sub" x="700" y="456" text-anchor="middle">+ config sweep</text>
+
+  <path class="edge" d="M290,438 C310,438 315,403 336,403" marker-end="url(#arw)"/>
+  <path class="edge" d="M290,444 C310,444 315,483 336,483" marker-end="url(#arw)"/>
+  <path class="edge" d="M540,403 C565,403 575,438 596,438" marker-end="url(#arw)"/>
+  <path class="edge" d="M540,483 C565,483 575,443 596,443" marker-end="url(#arw)"/>
+
+  <!-- footer: surfaces -->
+  <rect x="140" y="560" width="700" height="46" rx="23" fill="#0f151d" stroke="#30363d"/>
+  <text class="t" x="490" y="588" text-anchor="middle" fill="#adbac7" font-size="15">
+    <tspan fill="#768390">Surfaces:</tspan>  CLI  ·  Python library  ·  REST API (FastAPI + Docker)
+  </text>
+
+  <text class="t sub" x="490" y="632" text-anchor="middle">one typed RunConfig threads through every stage — reproducible by construction</text>
+</svg>

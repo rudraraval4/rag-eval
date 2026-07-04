@@ -1,8 +1,6 @@
 <div align="center">
 
-# 🔍 rag-eval
-
-**A production-grade RAG system whose real feature is _measuring itself_.**
+<img src="docs/banner.svg" alt="rag-eval — a production-grade RAG system that measures itself" width="100%">
 
 [![CI](https://github.com/rudraraval4/rag-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/rudraraval4/rag-eval/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -196,24 +194,9 @@ Local BGE embeddings run on CPU — no GPU required. Provide `GROQ_API_KEY` via
 
 ## Architecture
 
-```
- docs/ (md, txt, pdf, html)                          ┌──────────────┐
-        │  INGEST                                     │  Chroma      │
-        └─▶ load → chunk (token-aware, overlap) ──────┤  (persistent)│
-              → embed (pluggable: BGE/OpenAI/Voyage)  └──────┬───────┘
-                                                             │
- question ─▶ embed query → retrieve top-k ───────────────────┘
-              → numbered context → LLM answers with [n] citations
-              → resolve every [n] to a real chunk (drop fabricated ones)
-                                    │
-                                    ▼  answer + verified citations
-
- eval-set ─▶ RETRIEVAL METRICS (deterministic): recall@k, hit-rate, MRR, precision@k
-          ─▶ ANSWER METRICS (LLM-as-judge): faithfulness, relevance, hallucination
-          ─▶ SCORECARD (saved) + CONFIG SWEEP → comparison table
-
- surfaces:  CLI (typer)  ·  Python library  ·  REST API (FastAPI + Docker)
-```
+<div align="center">
+  <img src="docs/architecture.svg" alt="Architecture: ingest loads, chunks, embeds documents into Chroma; ask retrieves top-k and answers with verified citations; evaluate produces the scorecard and config sweep — all driven by one config" width="900">
+</div>
 
 One `RunConfig` (Pydantic) threads through every stage, so a change to chunk
 size, `k`, or provider is a single edit and every run is reproducible.

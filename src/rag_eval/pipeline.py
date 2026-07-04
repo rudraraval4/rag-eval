@@ -19,14 +19,14 @@ from .store import VectorStore
 
 def build_retriever(cfg: RunConfig) -> Retriever:
     """Construct a retriever from config (embedding provider + vector store)."""
-    embedder = get_embedding_model(cfg.embedding)
+    embedder = get_embedding_model(cfg.embedding, cfg.retry)
     store = VectorStore(cfg.storage)
     return Retriever(store, embedder, cfg.retrieval.top_k)
 
 
 def run_ingest(cfg: RunConfig, *, rebuild: bool = False) -> dict[str, int]:
     """Load the corpus, chunk it, embed it, and populate the vector store."""
-    embedder = get_embedding_model(cfg.embedding)
+    embedder = get_embedding_model(cfg.embedding, cfg.retry)
     store = VectorStore(cfg.storage)
     if rebuild:
         store.reset()
@@ -46,6 +46,6 @@ def run_ingest(cfg: RunConfig, *, rebuild: bool = False) -> dict[str, int]:
 def run_ask(cfg: RunConfig, question: str) -> Answer:
     """Retrieve context and produce a cited answer for a single question."""
     retriever = build_retriever(cfg)
-    llm = get_llm_client(cfg.llm)
+    llm = get_llm_client(cfg.llm, cfg.retry)
     retrieval = retriever.retrieve(question)
     return generate_answer(llm, question, retrieval)

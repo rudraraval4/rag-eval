@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from .config import EmbeddingConfig
+from .config import EmbeddingConfig, RetryConfig
 from .errors import MissingDependencyError, require_env
+from .resilience import call_with_retry
 
 # BGE v1.5 models were trained with a query-side instruction for retrieval.
 # Documents are embedded as-is; only the query gets the prefix.
@@ -73,7 +74,9 @@ class OpenAIEmbedding:
 
     _DIMS = {"text-embedding-3-small": 1536, "text-embedding-3-large": 3072}
 
-    def __init__(self, model: str, batch_size: int = 128) -> None:
+    def __init__(
+        self, model: str, batch_size: int = 128, retry: RetryConfig | None = None
+    ) -> None:
         api_key = require_env("openai", "OPENAI_API_KEY")
         try:
             from openai import OpenAI
@@ -83,13 +86,20 @@ class OpenAIEmbedding:
         self._client = OpenAI(api_key=api_key)
         self._model = model
         self._batch_size = batch_size
+        self._retry = retry or RetryConfig()
         self.dim = self._DIMS.get(model, 1536)
 
     def _embed(self, texts: list[str]) -> list[list[float]]:
         out: list[list[float]] = []
         for start in range(0, len(texts), self._batch_size):
             batch = texts[start : start + self._batch_size]
-            resp = self._client.embeddings.create(model=self._model, input=batch)
+            resp = call_with_retry(
+                lambda b=batch: self._client.embeddings.create(
+                    model=self._model, input=b
+                ),
+                self._retry,
+                what="openai embeddings",
+            )
             out.extend(item.embedding for item in resp.data)
         return out
 
@@ -105,7 +115,9 @@ class VoyageEmbedding:
 
     _DIMS = {"voyage-3": 1024, "voyage-3-lite": 512}
 
-    def __init__(self, model: str, batch_size: int = 128) -> None:
+    def __init__(
+        self, model: str, batch_size: int = 128, retry: RetryConfig | None = None
+    ) -> None:
         api_key = require_env("voyage", "VOYAGE_API_KEY")
         try:
             import voyageai
@@ -115,27 +127,40 @@ class VoyageEmbedding:
         self._client = voyageai.Client(api_key=api_key)
         self._model = model
         self._batch_size = batch_size
+        self._retry = retry or RetryConfig()
         self.dim = self._DIMS.get(model, 1024)
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         out: list[list[float]] = []
         for start in range(0, len(texts), self._batch_size):
             batch = texts[start : start + self._batch_size]
-            resp = self._client.embed(batch, model=self._model, input_type="document")
+            resp = call_with_retry(
+                lambda b=batch: self._client.embed(
+                    b, model=self._model, input_type="document"
+                ),
+                self._retry,
+                what="voyage embeddings",
+            )
             out.extend(resp.embeddings)
         return out
 
     def embed_query(self, text: str) -> list[float]:
-        resp = self._client.embed([text], model=self._model, input_type="query")
+        resp = call_with_retry(
+            lambda: self._client.embed([text], model=self._model, input_type="query"),
+            self._retry,
+            what="voyage embeddings",
+        )
         return resp.embeddings[0]
 
 
-def get_embedding_model(cfg: EmbeddingConfig) -> EmbeddingModel:
+def get_embedding_model(
+    cfg: EmbeddingConfig, retry: RetryConfig | None = None
+) -> EmbeddingModel:
     """Factory: build the embedding model selected by config."""
     if cfg.provider == "bge":
         return BGEEmbedding(cfg.model, cfg.batch_size)
     if cfg.provider == "openai":
-        return OpenAIEmbedding(cfg.model, cfg.batch_size)
+        return OpenAIEmbedding(cfg.model, cfg.batch_size, retry)
     if cfg.provider == "voyage":
-        return VoyageEmbedding(cfg.model, cfg.batch_size)
+        return VoyageEmbedding(cfg.model, cfg.batch_size, retry)
     raise ValueError(f"Unknown embedding provider: {cfg.provider!r}")

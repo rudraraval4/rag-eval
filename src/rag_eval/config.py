@@ -53,6 +53,25 @@ class PathsConfig(BaseModel):
     runs_dir: str = "runs"
 
 
+class RetryConfig(BaseModel):
+    """Automatic retry with exponential backoff for transient provider errors."""
+
+    max_attempts: int = Field(5, ge=1, description="Total attempts before giving up.")
+    base_delay: float = Field(1.0, gt=0, description="Initial backoff in seconds.")
+    max_delay: float = Field(30.0, gt=0, description="Backoff ceiling in seconds.")
+
+
+class EvalConfig(BaseModel):
+    """Evaluation execution settings."""
+
+    concurrency: int = Field(
+        8, ge=1, description="Parallel workers for answer/judge LLM calls."
+    )
+    save_runs: bool = Field(
+        True, description="Persist each run to runs/<timestamp>/ as json + markdown."
+    )
+
+
 class RunConfig(BaseModel):
     """The single source of truth for a pipeline run."""
 
@@ -65,6 +84,8 @@ class RunConfig(BaseModel):
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
     paths: PathsConfig = Field(default_factory=PathsConfig)
+    retry: RetryConfig = Field(default_factory=RetryConfig)
+    eval: EvalConfig = Field(default_factory=EvalConfig)
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> RunConfig:

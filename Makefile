@@ -1,12 +1,16 @@
-.PHONY: install install-all ingest ask eval sweep test lint fmt clean
+.PHONY: install install-all ingest ask eval sweep doctor serve test lint fmt \
+        docker-build docker-up clean
 
 CONFIG ?= configs/default.yaml
 
 install:
-	pip install -e ".[dev]"
+	pip install -e ".[api,dev]"
 
 install-all:
 	pip install -e ".[all,dev]"
+
+doctor:
+	rag-eval doctor --config $(CONFIG)
 
 ingest:
 	rag-eval ingest --config $(CONFIG)
@@ -20,6 +24,9 @@ eval:
 sweep:
 	rag-eval sweep --config $(CONFIG)
 
+serve:
+	rag-eval serve
+
 test:
 	pytest
 
@@ -29,5 +36,11 @@ lint:
 fmt:
 	ruff format .
 
+docker-build:
+	docker build -t rag-eval .
+
+docker-up:
+	docker compose up --build
+
 clean:
-	rm -rf .chroma runs .pytest_cache .ruff_cache htmlcov .coverage
+	rm -rf .chroma runs logs .pytest_cache .ruff_cache htmlcov .coverage

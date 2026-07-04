@@ -1,5 +1,9 @@
 # rag-eval
 
+[![CI](https://github.com/rudraraval4/rag-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/rudraraval4/rag-eval/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+
 **A production-grade RAG system whose real feature is measuring itself.**
 
 Everyone builds "chat with your PDF." Almost nobody proves theirs is any good.
@@ -8,7 +12,9 @@ first-class evaluation harness — deterministic retrieval metrics plus an
 LLM-as-judge scorecard — so every configuration change is backed by numbers,
 not vibes.
 
-The pipeline is deliberately standard. **The eval is the point.**
+Runnable three ways: a **CLI**, an importable **Python library**, and a **REST
+API** (with Docker). Pluggable embedding and LLM providers, retry/backoff,
+concurrent evaluation, structured logging, and saved run artifacts.
 
 ---
 
@@ -16,13 +22,9 @@ The pipeline is deliberately standard. **The eval is the point.**
 
 `rag-eval eval` on the committed corpus (10 documents) and labeled eval set
 (25 questions), default config — local BGE embeddings, Groq
-`llama-3.3-70b-versatile` for both answering and judging:
+`llama-3.3-70b-versatile` for answering and judging:
 
 ```
-Run configuration
-  embedding=bge:BAAI/bge-small-en-v1.5 · llm=groq:llama-3.3-70b-versatile
-  judge=groq:llama-3.3-70b-versatile · chunk_size=512 · overlap=64 · top_k=5
-
 Retrieval metrics (k=5, n=25)        Answer-quality (LLM-as-judge)
 ┌─────────────┬───────┐              ┌────────────────────┬───────┐
 │ hit_rate    │ 1.000 │              │ faithfulness       │ 1.000 │
@@ -35,90 +37,70 @@ Retrieval metrics (k=5, n=25)        Answer-quality (LLM-as-judge)
 - **Retrieval metrics are deterministic** — no LLM, no flakiness. `recall@5 =
   1.0` means the right document was always in the top 5; `MRR = 0.893` means it
   was usually rank 1. `precision@5 = 0.217` is expected and honest: most
-  questions have a single relevant document, so at most 1 of 5 retrieved chunks
-  can be "relevant."
-- **Answer quality is LLM-judged** at temperature 0 with pinned prompts:
-  faithfulness (is every claim grounded in retrieved context?), answer relevance,
-  and a hallucination flag. `hallucination_rate = 0.0` includes the two
-  deliberately **unanswerable** questions — the system correctly declines
-  instead of fabricating.
+  questions have one relevant document, so at most 1 of 5 retrieved chunks is
+  "relevant."
+- **Answer quality is LLM-judged** at temperature 0 with pinned prompts.
+  `hallucination_rate = 0.0` includes the two deliberately **unanswerable**
+  questions — the system correctly declines instead of fabricating.
+
+Every run is saved to `runs/<timestamp>/scorecard.{json,md}` — auditable and
+diffable.
 
 ## Which configuration is best? (the experiment)
 
 `rag-eval sweep` re-indexes across chunk sizes and sweeps `k`, reporting the
-deterministic retrieval metrics that chunking actually moves. One command, one
-table:
+deterministic retrieval metrics chunking actually moves. One command, one table:
 
-| chunk | overlap | k | hit_rate | recall@k | precision@k | MRR |
-|------:|--------:|--:|---------:|---------:|------------:|------:|
-| 64  | 8  | 3 | 0.957 | 0.928 | **0.652** | 0.928 |
-| 64  | 8  | 5 | 1.000 | 0.986 | 0.461 | 0.938 |
-| **128** | **16** | **3** | 0.957 | 0.942 | 0.551 | **0.957** |
-| 128 | 16 | 5 | 0.957 | 0.957 | 0.357 | 0.957 |
-| 256 | 32 | 3 | 0.957 | 0.957 | 0.348 | 0.884 |
-| 256 | 32 | 5 | 1.000 | **1.000** | 0.217 | 0.893 |
+| chunk | k | recall@k | precision@k | MRR |
+|------:|--:|---------:|------------:|------:|
+| 64  | 3 | 0.928 | **0.652** | 0.928 |
+| 64  | 5 | 0.986 | 0.461 | 0.938 |
+| **128** | **3** | 0.942 | 0.551 | **0.957** |
+| 128 | 5 | 0.957 | 0.357 | 0.957 |
+| 256 | 3 | 0.957 | 0.348 | 0.884 |
+| 256 | 5 | **1.000** | 0.217 | 0.893 |
 
 **Finding:** for this corpus of short, single-topic documents, **chunk size 128
-gives the best ranking (MRR 0.957)** and a strong recall/precision balance. Tiny
-chunks (64) maximize precision but fragment context; whole-document chunks (256)
-maximize `recall@5` but rank the right document lower and drown it among
-irrelevant neighbours. This is the kind of decision teams usually make by gut —
-here it's a measurement.
+gives the best ranking (MRR 0.957)**. Tiny chunks (64) maximize precision but
+fragment context; whole-document chunks (256) maximize `recall@5` but rank the
+right document lower. A decision teams usually make by gut — here it's measured.
+
+And because providers are swappable, the harness catches quality regressions
+from a weaker model — same retrieval, measurably weaker answers:
+
+| answer model | recall@5 | MRR | faithfulness | answer_relevance |
+|---|---:|---:|---:|---:|
+| Groq `llama-3.3-70b` | 1.000 | 0.893 | **1.000** | **0.992** |
+| Groq `llama-3.1-8b`  | 1.000 | 0.893 | 0.960 | 0.860 |
 
 ## Honest failure the eval catches
 
-The eval set includes questions the corpus **cannot** answer (e.g. "How do I
-configure Git to sign commits with an SSH key?"). A naive RAG system happily
-hallucinates an answer. Here, retrieval still returns the nearest chunks, but the
-answerer is instructed to decline, and the judge confirms it: those cases score
-faithful and non-hallucinated **because the system refused**. The harness is
-what lets you assert that — instead of hoping.
+The eval set includes questions the corpus **cannot** answer (e.g. "configure
+Git to sign commits with an SSH key"). A naive RAG system hallucinates an
+answer. Here the answerer declines and the judge confirms it — those cases score
+faithful and non-hallucinated *because the system refused*. The harness lets you
+assert that, instead of hoping.
 
 ---
 
-## Architecture
-
-```
- docs/ (md, txt, pdf, html)                          ┌──────────────┐
-        │  INGEST                                     │  Chroma      │
-        └─▶ load → chunk (token-aware, overlap) ──────┤  (persistent)│
-              → embed (BGE, local, no key)            └──────┬───────┘
-                                                             │
- question ─▶ embed query → retrieve top-k ───────────────────┘
-              → build numbered context
-              → LLM answers with [n] citations
-              → resolve every [n] to a real chunk (drop fabricated ones)
-                                    │
-                                    ▼   answer + verified citations
-
- eval-set ─▶ RETRIEVAL METRICS (deterministic): recall@k, hit-rate, MRR, precision@k
-          ─▶ ANSWER METRICS (LLM-as-judge): faithfulness, relevance, hallucination
-          ─▶ SCORECARD  +  CONFIG SWEEP (chunk size × k) → comparison table
-```
-
-One `RunConfig` (Pydantic) threads through every stage, so a change to chunk
-size, `k`, or provider is a single edit and every run is reproducible.
-
 ## Pluggable providers
 
-Swap embedding and LLM providers via config or CLI flags; paid providers activate
-only when you supply an API key (lazy-imported optional extras keep the base
-install lean).
+Swap embedding and LLM providers via config or CLI flags. Paid providers
+activate only when you supply an API key (lazy-imported optional extras keep the
+base install lean).
 
 | Layer | Default (no extra key) | Opt-in |
 |---|---|---|
 | Embeddings | **BGE** (`bge-small-en-v1.5`, local, offline) | OpenAI, Voyage |
 | LLM (answer + judge) | **Groq** (`llama-3.3-70b-versatile`) | OpenAI, Anthropic (Claude) |
 
-Ingest + retrieval are fully keyless (local BGE). Answering and evaluation need
-one free [Groq](https://console.groq.com/keys) key by default. The judge is
-configured separately from the answerer, so you can point it at a different (or
-stronger) model to reduce self-preference bias.
-
 ```bash
-# use Claude to answer, keep Groq as the judge — no code change
+# Answer with Claude, keep Groq as an independent judge — no code change
 rag-eval ask "..." --llm-provider anthropic --llm-model claude-sonnet-5
 ```
+
+The judge is configured separately from the answerer, so you can point it at a
+different (or stronger) model to reduce self-preference bias.
 
 ## Quickstart
 
@@ -126,88 +108,149 @@ rag-eval ask "..." --llm-provider anthropic --llm-model claude-sonnet-5
 python -m venv .venv
 # activate: source .venv/bin/activate        (macOS/Linux)
 #           .\.venv\Scripts\Activate.ps1     (Windows PowerShell)
-pip install -e ".[dev]"
+pip install -e ".[api,dev]"
 cp .env.example .env            # add GROQ_API_KEY (free at console.groq.com/keys)
 
+rag-eval doctor                 # preflight: keys, corpus, eval set, index
 rag-eval ingest                 # build the vector index from data/corpus
 rag-eval ask "How do I create a branch and switch to it?"
-rag-eval eval                   # print the scorecard
-rag-eval sweep                  # print the config-comparison table
+rag-eval eval                   # scorecard (progress bar + ETA, saved to runs/)
+rag-eval sweep                  # config-comparison table
 ```
 
-> The `rag-eval` command lives inside the virtualenv — activate it first (above),
-> or call it directly with `.venv/bin/rag-eval` / `.\.venv\Scripts\rag-eval.exe`.
-> Prefer a smaller/faster model or hit a rate limit? Every command takes
-> `--config configs/groq-8b.yaml`.
+> The `rag-eval` command lives inside the virtualenv — activate it first, or
+> call it directly with `.venv/bin/rag-eval` / `.\.venv\Scripts\rag-eval.exe`.
+> Every command takes `--config configs/groq-8b.yaml` for a smaller/faster model.
 
-Example `ask` output:
+## Use your own data
+
+1. Drop your files (`.md`, `.txt`, `.pdf`, `.html`) into `data/corpus/`.
+2. `rag-eval ingest --rebuild` → now it answers over your documents.
+3. To evaluate on your data, write a `data/eval/eval_set.jsonl` — one JSON line
+   per case: `{"case_id", "question", "ideal_answer", "relevant_doc_ids": [...]}`.
+   That labeled set is what turns "seems fine" into "recall@5 = 0.94."
+
+Everything (folders, providers, chunk size, `k`, concurrency) lives in
+`configs/*.yaml` — no code changes.
+
+## REST API
+
+Run it as a service:
+
+```bash
+pip install -e ".[api]"
+rag-eval serve                  # http://127.0.0.1:8000  (interactive docs at /docs)
+```
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET  | `/health` | liveness |
+| GET  | `/config` | active configuration summary |
+| POST | `/ingest` | build/rebuild the index (`{"rebuild": true}`) |
+| POST | `/ask`    | `{"question": "...", "top_k": 5}` → answer + resolved citations |
+| POST | `/eval`   | `{"judge": true, "limit": 25}` → scorecard summary |
+
+```bash
+curl -s localhost:8000/ask -H 'content-type: application/json' \
+  -d '{"question":"What is the difference between git reset --hard and git revert?"}'
+```
+
+### Docker
+
+```bash
+docker compose up --build       # API on :8000, index persisted in a volume
+# then: curl -X POST localhost:8000/ingest -d '{}' -H 'content-type: application/json'
+```
+
+Local BGE embeddings run on CPU — no GPU required. Provide `GROQ_API_KEY` via
+`.env` (compose reads it automatically).
+
+## Production features
+
+- **Retry with backoff** — every provider call is wrapped; transient 429s / 5xx
+  are retried with jittered exponential backoff, non-transient errors fail fast.
+- **Concurrent evaluation** — answer + judge calls run across a bounded thread
+  pool (`eval.concurrency`), turning a minutes-long eval into seconds.
+- **Progress + feedback** — `eval` shows a live progress bar with ETA; `ingest`
+  and `ask` show spinners; ML-stack warning noise is suppressed.
+- **Structured logging** — console (`--verbose`/`--quiet`) and a rotating file
+  under `logs/`, capturing provider latency, token usage, and retries.
+- **Run artifacts** — every eval writes `runs/<timestamp>/scorecard.{json,md}`.
+- **`doctor`** — one command validates keys, corpus, eval set, and index before
+  you spend time on a run that would fail.
+
+## Architecture
 
 ```
-╭───────────────────────────── Answer ─────────────────────────────╮
-│ You can create a branch and switch to it in one step using        │
-│ `git switch -c <name>` [1] or the older `git checkout -b          │
-│ <name>` [1].                                                      │
-╰───────────────────────────────────────────────────────────────────╯
-  Citations
-  # │ Source    │ Chunk
-  1 │ branching │ branching::0
-  model: groq:llama-3.3-70b-versatile · retrieved: 5 chunks
+ docs/ (md, txt, pdf, html)                          ┌──────────────┐
+        │  INGEST                                     │  Chroma      │
+        └─▶ load → chunk (token-aware, overlap) ──────┤  (persistent)│
+              → embed (pluggable: BGE/OpenAI/Voyage)  └──────┬───────┘
+                                                             │
+ question ─▶ embed query → retrieve top-k ───────────────────┘
+              → numbered context → LLM answers with [n] citations
+              → resolve every [n] to a real chunk (drop fabricated ones)
+                                    │
+                                    ▼  answer + verified citations
+
+ eval-set ─▶ RETRIEVAL METRICS (deterministic): recall@k, hit-rate, MRR, precision@k
+          ─▶ ANSWER METRICS (LLM-as-judge): faithfulness, relevance, hallucination
+          ─▶ SCORECARD (saved) + CONFIG SWEEP → comparison table
+
+ surfaces:  CLI (typer)  ·  Python library  ·  REST API (FastAPI + Docker)
 ```
+
+One `RunConfig` (Pydantic) threads through every stage, so a change to chunk
+size, `k`, or provider is a single edit and every run is reproducible.
 
 ## Project layout
 
 ```
 src/rag_eval/
-  config.py schemas.py errors.py   # typed core (Pydantic) + friendly errors
-  embed.py  llm.py                 # pluggable providers (factory + lazy imports)
-  ingest/{loaders,chunker}.py      # md/txt/pdf/html loaders + token-aware chunker
-  store.py retrieve.py answer.py   # Chroma + retrieval + cited answering
-  pipeline.py render.py cli.py     # wiring, rich output, Typer CLI
+  config.py schemas.py errors.py       # typed core + friendly errors
+  observability.py resilience.py       # logging + retry/backoff
+  embed.py  llm.py                     # pluggable providers (factory + lazy imports)
+  ingest/{loaders,chunker}.py          # md/txt/pdf/html loaders + token-aware chunker
+  store.py retrieve.py answer.py       # Chroma + retrieval + cited answering
+  pipeline.py render.py cli.py         # wiring, rich output, Typer CLI
+  diagnostics.py api.py                # doctor checks, FastAPI service
   eval/
-    retrieval_metrics.py           # recall@k, hit-rate, MRR, precision@k
-    judge.py                       # faithfulness / relevance / hallucination
-    dataset.py runner.py sweep.py  # eval set, scorecard, config comparison
-data/corpus/                       # committed sample documents
-data/eval/eval_set.jsonl           # 25 labeled cases (2 unanswerable)
-tests/                             # 25 tests
+    retrieval_metrics.py judge.py      # deterministic metrics + LLM-as-judge
+    dataset.py runner.py sweep.py artifacts.py
+configs/                               # default.yaml, groq-8b.yaml
+data/corpus/  data/eval/eval_set.jsonl # committed sample corpus + 25 labeled cases
+tests/                                 # 39 tests (pipeline + eval + API + retry)
+Dockerfile docker-compose.yml .github/workflows/ci.yml
 ```
 
-## Testing
+## Testing & CI
 
 ```bash
-pytest        # 25 tests: chunking spans/overlap, retrieval metrics, citation
-              # resolution (incl. dropping fabricated cites), judge parsing,
-              # provider selection. LLMs are mocked — no network, no keys.
+pytest        # 39 tests: chunking, retrieval metrics, citation resolution,
+              # judge parsing, provider selection, retry, run artifacts, REST API.
+              # LLMs are mocked — no network, no keys.
+ruff check .  # lint (enforced in CI)
 ```
 
-## Design choices worth calling out
-
-- **Citations resolve to real retrieved chunks.** The answer's `[n]` markers are
-  matched back to the exact chunk they reference; any marker with no
-  corresponding retrieval is dropped as fabricated. No invented sources.
-- **The eval set ships with the repo.** Corpus + labeled questions are committed,
-  so anyone can reproduce every number above.
-- **Retrieval eval is LLM-free.** The credible half of the scorecard is exact and
-  deterministic; only answer quality uses a judge.
+GitHub Actions runs ruff + pytest on every push and PR.
 
 ## Limitations (honest notes)
 
 - The corpus (10 Git-concept docs) and eval set (25 questions) are a **small,
-  illustrative sample** chosen so ground truth is unambiguous and fully
-  reproducible offline — the metrics demonstrate the harness, they are not a
-  general RAG benchmark. Point the config at your own corpus and eval set to get
-  numbers that mean something for your data.
-- The default judge shares a model family with the answerer. LLM-as-judge has
-  known self-preference bias; configure a different `judge.provider`/`judge.model`
-  for a more independent signal (the plumbing is already there).
+  illustrative sample** chosen so ground truth is unambiguous and reproducible
+  offline — they demonstrate the harness, they are not a general benchmark.
+  Point the config at your own corpus and eval set for numbers that mean
+  something for your data.
+- The default judge shares a model family with the answerer; configure a
+  different `judge.provider`/`judge.model` for a more independent signal.
 - The chunker approximates tokens on a whitespace boundary — transparent and
   dependency-free, but not identical to a model's BPE tokenizer.
 
 ## Alternatives considered
 
 The evaluator is hand-rolled on purpose — owning the retrieval metrics and judge
-prompts is the whole point of the project. [ragas](https://github.com/explodinggradients/ragas)
-is a capable off-the-shelf alternative if you'd rather not maintain your own.
+prompts is the point. [ragas](https://github.com/explodinggradients/ragas) is a
+capable off-the-shelf alternative if you'd rather not maintain your own.
 
 ## License
 

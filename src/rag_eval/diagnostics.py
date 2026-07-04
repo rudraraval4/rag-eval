@@ -43,11 +43,12 @@ def run_diagnostics(cfg: RunConfig) -> list[Check]:
     checks: list[Check] = []
 
     # Provider keys for the selected providers.
-    checks.append(
-        _key_check("embedding key", cfg.embedding.provider, _EMBED_KEYS.get(cfg.embedding.provider))
-    )
-    checks.append(_key_check("answer llm key", cfg.llm.provider, _LLM_KEYS.get(cfg.llm.provider)))
-    checks.append(_key_check("judge llm key", cfg.judge.provider, _LLM_KEYS.get(cfg.judge.provider)))
+    emb = cfg.embedding.provider
+    checks.append(_key_check("embedding key", emb, _EMBED_KEYS.get(emb)))
+    llm = cfg.llm.provider
+    checks.append(_key_check("answer llm key", llm, _LLM_KEYS.get(llm)))
+    jdg = cfg.judge.provider
+    checks.append(_key_check("judge llm key", jdg, _LLM_KEYS.get(jdg)))
 
     # Corpus.
     corpus = Path(cfg.paths.corpus_dir)

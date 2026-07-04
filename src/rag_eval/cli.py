@@ -18,7 +18,6 @@ os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 from pathlib import Path  # noqa: E402
-from typing import Optional  # noqa: E402
 
 import typer  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
@@ -73,7 +72,7 @@ def doctor(
 @app.command()
 def ingest(
     config: str = typer.Option(DEFAULT_CONFIG, help="Path to the run config YAML."),
-    corpus_dir: Optional[str] = typer.Option(None, help="Override the corpus directory."),
+    corpus_dir: str | None = typer.Option(None, help="Override the corpus directory."),
     rebuild: bool = typer.Option(False, help="Drop and rebuild the collection from scratch."),
 ) -> None:
     """Build the vector index from a folder of documents."""
@@ -92,9 +91,9 @@ def ingest(
 def ask(
     question: str = typer.Argument(..., help="The question to answer."),
     config: str = typer.Option(DEFAULT_CONFIG, help="Path to the run config YAML."),
-    top_k: Optional[int] = typer.Option(None, help="Override number of chunks to retrieve."),
-    llm_provider: Optional[str] = typer.Option(None, help="Override LLM provider."),
-    llm_model: Optional[str] = typer.Option(None, help="Override LLM model."),
+    top_k: int | None = typer.Option(None, help="Override number of chunks to retrieve."),
+    llm_provider: str | None = typer.Option(None, help="Override LLM provider."),
+    llm_model: str | None = typer.Option(None, help="Override LLM model."),
 ) -> None:
     """Answer a question with inline citations to source chunks."""
     cfg = _load_config(
@@ -117,7 +116,7 @@ def ask(
 def eval(
     config: str = typer.Option(DEFAULT_CONFIG, help="Path to the run config YAML."),
     no_judge: bool = typer.Option(False, help="Skip LLM-as-judge; retrieval metrics only."),
-    limit: Optional[int] = typer.Option(None, help="Only evaluate the first N cases."),
+    limit: int | None = typer.Option(None, help="Only evaluate the first N cases."),
 ) -> None:
     """Run the evaluation suite and print a scorecard."""
     cfg = _load_config(config)

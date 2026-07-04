@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import Callable, Iterator
 
 from rich.console import Console
 from rich.panel import Panel
@@ -83,7 +83,8 @@ def print_answer(console: Console, answer: Answer) -> None:
     else:
         console.print("[yellow]No citations resolved for this answer.[/]")
 
-    console.print(f"[dim]model: {answer.model} · retrieved: {len(answer.retrieval.retrieved)} chunks[/]")
+    n = len(answer.retrieval.retrieved)
+    console.print(f"[dim]model: {answer.model} · retrieved: {n} chunks[/]")
 
 
 def _fmt(value: float | None) -> str:

@@ -90,7 +90,7 @@ class VectorStore:
 
         retrieved: list[RetrievedChunk] = []
         for rank, (cid, text, meta, dist) in enumerate(
-            zip(ids, documents, metadatas, distances), start=1
+            zip(ids, documents, metadatas, distances, strict=False), start=1
         ):
             extra = {
                 k: str(v) for k, v in meta.items() if k not in _RESERVED_KEYS

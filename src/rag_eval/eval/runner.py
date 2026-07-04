@@ -9,8 +9,8 @@ eval finishes in seconds instead of minutes. Retrieval runs sequentially
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable
 
 from ..answer import generate_answer
 from ..config import RunConfig

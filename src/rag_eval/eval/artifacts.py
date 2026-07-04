@@ -8,7 +8,7 @@ the difference between "trust me, it's good" and "here's the run."
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from ..schemas import Scorecard
@@ -58,7 +58,7 @@ def scorecard_to_markdown(sc: Scorecard) -> str:
 
 def save_scorecard(sc: Scorecard, runs_dir: str | Path) -> Path:
     """Write a run's JSON + Markdown into ``runs_dir/<timestamp>/`` and return it."""
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     out = Path(runs_dir) / stamp
     out.mkdir(parents=True, exist_ok=True)
     (out / "scorecard.json").write_text(sc.model_dump_json(indent=2), encoding="utf-8")

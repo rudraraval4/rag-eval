@@ -10,7 +10,6 @@ extra: ``pip install -e ".[api]"``, then ``rag-eval serve`` or
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -54,7 +53,7 @@ class _Service:
 # --------------------------------------------------------------------------- #
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1)
-    top_k: Optional[int] = Field(None, ge=1)
+    top_k: int | None = Field(None, ge=1)
 
 
 class Source(BaseModel):
@@ -78,7 +77,7 @@ class IngestRequest(BaseModel):
 
 class EvalRequest(BaseModel):
     judge: bool = True
-    limit: Optional[int] = Field(None, ge=1)
+    limit: int | None = Field(None, ge=1)
 
 
 def create_app(cfg: RunConfig | None = None) -> FastAPI:

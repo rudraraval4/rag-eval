@@ -7,7 +7,6 @@ eval set committed alongside the corpus is what makes results reproducible.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from ..errors import RagEvalError

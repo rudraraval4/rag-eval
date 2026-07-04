@@ -39,5 +39,6 @@ def run_sweep(base: RunConfig, *, answers: bool = False, judge: bool = False) ->
         run_ingest(chunk_cfg, rebuild=True)
         for top_k in TOP_K_GRID:
             run_cfg = chunk_cfg.with_overrides(**{"retrieval.top_k": top_k})
-            results.append(run_eval(run_cfg, answers=answers, judge=judge))
+            # Don't persist each sweep sub-run as a separate scorecard.
+            results.append(run_eval(run_cfg, answers=answers, judge=judge, save=False))
     return results

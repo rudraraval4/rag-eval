@@ -2,11 +2,71 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from typing import Callable, Iterator
+
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 
 from .schemas import Answer, Scorecard
+
+
+@contextmanager
+def progress_callback(
+    console: Console, description: str
+) -> Iterator[Callable[[int, int], None]]:
+    """Yield an ``on_progress(done, total)`` callback backed by a live bar.
+
+    The bar shows a spinner, an N/total counter, elapsed time, and an ETA — so a
+    non-technical user can see it's working and roughly how long is left.
+    """
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TimeElapsedColumn(),
+        TimeRemainingColumn(),
+        console=console,
+        transient=False,
+    ) as progress:
+        state: dict[str, object] = {"task": None}
+
+        def callback(done: int, total: int) -> None:
+            if state["task"] is None:
+                state["task"] = progress.add_task(description, total=total)
+            progress.update(state["task"], completed=done)  # type: ignore[arg-type]
+
+        yield callback
+
+
+def print_doctor(console: Console, checks: list) -> bool:
+    """Render preflight checks as a table. Returns True if all passed."""
+    table = Table(title="rag-eval doctor")
+    table.add_column("Check", style="cyan")
+    table.add_column("Status", justify="center")
+    table.add_column("Detail", style="dim")
+    all_ok = True
+    for c in checks:
+        mark = "[green]OK[/]" if c.ok else "[red]FAIL[/]"
+        all_ok = all_ok and c.ok
+        table.add_row(c.name, mark, c.detail)
+    console.print(table)
+    if all_ok:
+        console.print("[green]All checks passed — you're ready to run.[/]")
+    else:
+        console.print("[yellow]Some checks failed — see details above.[/]")
+    return all_ok
 
 
 def print_answer(console: Console, answer: Answer) -> None:

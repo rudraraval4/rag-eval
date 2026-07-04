@@ -32,6 +32,9 @@ runs/
 # Build / install logs
 *.log
 
+# Generated raster assets (LinkedIn/social) — the README renders the SVG
+docs/*.png
+
 # OS / editor
 .DS_Store
 .idea/

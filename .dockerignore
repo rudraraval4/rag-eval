@@ -1,0 +1,16 @@
+.venv/
+.git/
+.github/
+.chroma/
+runs/
+logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.hf_cache/
+*.log
+.env
+.env.local
+tests/
+docs/

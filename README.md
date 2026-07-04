@@ -1,10 +1,18 @@
-# rag-eval
+<div align="center">
+
+# 🔍 rag-eval
+
+**A production-grade RAG system whose real feature is _measuring itself_.**
 
 [![CI](https://github.com/rudraraval4/rag-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/rudraraval4/rag-eval/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Tests](https://img.shields.io/badge/tests-39%20passing-brightgreen.svg)](tests)
 
-**A production-grade RAG system whose real feature is measuring itself.**
+<img src="docs/demo.svg" alt="rag-eval terminal demo: a readiness check, a cited answer, an honest decline, and the config-comparison table" width="780">
+
+</div>
 
 Everyone builds "chat with your PDF." Almost nobody proves theirs is any good.
 `rag-eval` ships a clean retrieval-augmented-generation pipeline **and** a
@@ -12,15 +20,16 @@ first-class evaluation harness — deterministic retrieval metrics plus an
 LLM-as-judge scorecard — so every configuration change is backed by numbers,
 not vibes.
 
-Runnable three ways: a **CLI**, an importable **Python library**, and a **REST
-API** (with Docker). Pluggable embedding and LLM providers, retry/backoff,
-concurrent evaluation, structured logging, and saved run artifacts.
+### Why it reads as production-grade
 
-## Demo
-
-![rag-eval: doctor checklist, a cited answer, an honest decline, and the config-comparison table](docs/demo.gif)
-
-<sub>Generate it yourself with `make demo` — needs [vhs](https://github.com/charmbracelet/vhs), an activated venv, and `GROQ_API_KEY`.</sub>
+| | |
+|---|---|
+| 📊 **Measured, not vibes** | recall@k · hit-rate · MRR · precision@k, plus LLM-judge faithfulness / relevance / hallucination |
+| 🔌 **Pluggable providers** | Embeddings: BGE · OpenAI · Voyage — LLM: Groq · OpenAI · Anthropic. One flag to swap. |
+| 🧾 **Real citations** | every `[n]` resolves to an actual retrieved chunk; fabricated markers are dropped |
+| ⚡ **Fast & resilient** | concurrent eval · retry + backoff on rate-limits · progress bars with ETA |
+| 🩺 **Operable** | `doctor` preflight · structured logs · saved run artifacts · config-driven |
+| 🚀 **Three surfaces** | CLI · importable Python library · REST API (FastAPI + Docker) · CI |
 
 ---
 

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-size="15" role="img" aria-label="rag-eval terminal demo">
+  <style>
+    text { font-family: 'SFMono-Regular', 'JetBrains Mono', 'Fira Code', Consolas, monospace; }
+    .scene { opacity: 0; animation: show 24s infinite; animation-fill-mode: backwards; }
+    .s0 { animation-delay: 0s; }
+    .s1 { animation-delay: 6s; }
+    .s2 { animation-delay: 12s; }
+    .s3 { animation-delay: 18s; }
+    @keyframes show { 0% {opacity:0} 2% {opacity:1} 22% {opacity:1} 25% {opacity:0} 100% {opacity:0} }
+    .cur { animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .prompt { fill: #7ee787; }
+    .cmd { fill: #e6edf3; }
+    .out { fill: #adbac7; }
+    .ok  { fill: #3fb950; }
+    .cyan { fill: #39c5cf; }
+    .hl  { fill: #3fb950; font-weight: bold; }
+    .dim { fill: #768390; }
+    .title { fill: #768390; }
+  </style>
+
+  <!-- window -->
+  <rect x="6" y="6" width="888" height="348" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <circle cx="30" cy="28" r="6" fill="#ff5f56"/>
+  <circle cx="50" cy="28" r="6" fill="#ffbd2e"/>
+  <circle cx="70" cy="28" r="6" fill="#27c93f"/>
+  <text class="title" x="450" y="33" text-anchor="middle">rag-eval — live demo</text>
+
+  <g transform="translate(28,78)">
+    <!-- scene 0: doctor -->
+    <g class="scene s0">
+      <text y="0"><tspan class="prompt">$ </tspan><tspan class="cmd">rag-eval doctor</tspan></text>
+      <text class="ok" y="34">✓ answer llm key    groq: GROQ_API_KEY is set</text>
+      <text class="ok" y="60">✓ corpus            data/corpus (10 files)</text>
+      <text class="ok" y="86">✓ eval set          data/eval/eval_set.jsonl</text>
+      <text class="ok" y="112">✓ vector index      rag_eval: 10 chunks</text>
+      <text class="hl" y="144">All checks passed — you're ready to run.</text>
+      <text class="prompt" y="182">$ </text>
+      <rect class="cur" x="16" y="169" width="9" height="16" fill="#7ee787"/>
+    </g>
+
+    <!-- scene 1: cited answer -->
+    <g class="scene s1">
+      <text y="0"><tspan class="prompt">$ </tspan><tspan class="cmd">rag-eval ask "How do I create a branch and switch to it?"</tspan></text>
+      <text class="out" y="36">You can create a branch and switch to it in one step using</text>
+      <text class="out" y="62">git switch -c &lt;name&gt; [1]  or  git checkout -b &lt;name&gt; [1].</text>
+      <text class="cyan" y="96">[1]  branching   (branching::0)</text>
+      <text class="dim" y="124">model: groq:llama-3.3-70b-versatile · retrieved: 5 chunks</text>
+      <text class="prompt" y="162">$ </text>
+      <rect class="cur" x="16" y="149" width="9" height="16" fill="#7ee787"/>
+    </g>
+
+    <!-- scene 2: honest decline -->
+    <g class="scene s2">
+      <text y="0"><tspan class="prompt">$ </tspan><tspan class="cmd">rag-eval ask "How do I sign commits with an SSH key?"</tspan></text>
+      <text class="out" y="42">I don't have enough information.</text>
+      <text class="dim" y="76">No citations — the system declined instead of hallucinating.</text>
+      <text class="hl" y="110">✓ this "knows what it doesn't know" — caught by the eval harness</text>
+      <text class="prompt" y="148">$ </text>
+      <rect class="cur" x="16" y="135" width="9" height="16" fill="#7ee787"/>
+    </g>
+
+    <!-- scene 3: config sweep -->
+    <g class="scene s3">
+      <text y="0"><tspan class="prompt">$ </tspan><tspan class="cmd">rag-eval sweep</tspan></text>
+      <text class="dim" y="34">chunk   k    recall@k   precision@k     MRR</text>
+      <text class="out" y="60">  64    3      0.928       0.652       0.928</text>
+      <text class="hl"  y="86"> 128    3      0.942       0.551       0.957   ← best MRR</text>
+      <text class="out" y="112"> 256    5      1.000       0.217       0.893</text>
+      <text class="cyan" y="146">chunk size 128 wins on ranking — measured, not guessed.</text>
+      <text class="prompt" y="184">$ </text>
+      <rect class="cur" x="16" y="171" width="9" height="16" fill="#7ee787"/>
+    </g>
+  </g>
+</svg>

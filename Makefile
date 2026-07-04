@@ -1,5 +1,5 @@
 .PHONY: install install-all ingest ask eval sweep doctor serve test lint fmt \
-        docker-build docker-up demo clean
+        docker-build docker-up clean
 
 CONFIG ?= configs/default.yaml
 
@@ -41,9 +41,6 @@ docker-build:
 
 docker-up:
 	docker compose up --build
-
-demo:  ## record docs/demo.gif (needs vhs + an activated venv + GROQ_API_KEY)
-	vhs docs/demo.tape
 
 clean:
 	rm -rf .chroma runs logs .pytest_cache .ruff_cache htmlcov .coverage
